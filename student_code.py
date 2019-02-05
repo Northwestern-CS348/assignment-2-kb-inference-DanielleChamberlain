@@ -116,6 +116,27 @@ class KnowledgeBase(object):
             print("Invalid ask:", fact.statement)
             return []
 
+    def kb_rm_rule(self, r):
+        for r in self.rules:
+            if r.supported_by == [] and not r.asserted:
+                for f1 in r.supports_facts:
+                    g = f1.supported_by
+                    for sup in g:
+                        if sup[1] == r:
+                            sup[0].supports_facts.remove(f1)
+                            f1.supported_by.remove(sup)
+                            if not f1.asserted:
+                                self.kb_retract(f1)
+                    for r1 in r.supports_rules:
+                        g = r1.supported_by
+                        for sup in g:
+                            if sup[1] == r:
+                                sup[0].supports_rules.remove(r1)
+                                r1.supported_by.remove(sup)
+                                if r1.supported_by == [] and not r1.asserted:
+                                    self.kb_rm_rule(r1)
+                    self.rules.remove(r)
+
     def kb_retract(self, fact_or_rule):
         """Retract a fact from the KB
 
@@ -125,10 +146,32 @@ class KnowledgeBase(object):
         Returns:
             None
         """
-        printv("Retracting {!r}", 0, verbose, [fact_or_rule])
+        print("Retracting {!r}", 0, verbose, [fact_or_rule])
         ####################################################
-        # Student code goes here
-        
+        if isinstance(fact_or_rule, Fact):
+            for f in self.facts:
+                if fact_or_rule.statement == f.statement:
+                    f.asserted = False
+                    if f.supported_by == []:
+                        for f1 in f.supports_facts:
+                            #print(f1.statement)
+                            g = f1.supported_by
+                            for sup in g:
+                                if sup[0] == f:
+                                    sup[1].supports_facts.remove(f1)
+                                    f1.supported_by.remove(sup)
+                                    if not f1.asserted:
+                                        self.kb_retract(f1)
+                        for r1 in f.supports_rules:
+                            #print(r1.rhs)
+                            g = r1.supported_by
+                            for sup in g:
+                                if sup[0] == f:
+                                    sup[1].supports_rules.remove(r1)
+                                    r1.supported_by.remove(sup)
+                                    if r1.supported_by == [] and not r1.asserted:
+                                        self.kb_rm_rule(r1)
+                        self.facts.remove(f)
 
 class InferenceEngine(object):
     def fc_infer(self, fact, rule, kb):
@@ -145,4 +188,39 @@ class InferenceEngine(object):
         printv('Attempting to infer from {!r} and {!r} => {!r}', 1, verbose,
             [fact.statement, rule.lhs, rule.rhs])
         ####################################################
-        # Student code goes here
+        binds = match(rule.lhs[0], fact.statement)
+        if(binds):
+            t = instantiate(rule.rhs, binds)
+            rl = False
+            for tr in t.terms:
+                if is_var(tr):
+                    rl = True
+                    break
+            if rl:
+                #print('infer new rule')
+                new_rule = Rule([[], t])
+                new_rule.asserted = False
+                new_rule.supported_by.append([fact, rule])
+                for sta in rule.lhs:
+                    if sta != rule.lhs[0]:
+                        new_rule.lhs.append(instantiate(sta, binds))
+                kb.kb_add(new_rule)
+                fact.supports_rules.append(new_rule)
+                rule.supports_rules.append(new_rule)
+            else:
+                #print('infer new fact')
+                new_fact = Fact(t)
+                new_fact.asserted = False
+                new_fact.supported_by.append([fact, rule])
+                kb.kb_add(new_fact)
+                fact.supports_facts.append(new_fact)
+                rule.supports_facts.append(new_fact)
+
+
+
+
+
+
+
+
+
