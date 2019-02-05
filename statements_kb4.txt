@@ -9,3 +9,18 @@ rule: ((motherof ?x ?y)) -> (parentof ?x ?y)
 rule: ((parentof ?x ?y) (sisters ?x ?z)) -> (auntof ?z ?y)
 rule: ((parentof ?x ?y) (motherof ?z ?x)) -> (grandmotherof ?z ?y)
 
+
+
+fact: (dresslike profHammond TonyStark)
+fact: (lookslike profHammond TonyStark)
+fact: (talkslike profHammond TonyStark)
+fact: (techgenius profHammond)
+
+rule: ((dresslike ?x ?y) (lookslike ?x ?y) -> (resembles ?x ?y))
+rule: ((resembles ?x ?y) (talkslike ?x ?y) -> (isliterally ?x ?y))
+rule: ((resembles ?x TonyStark) (techgenius ?x) -> (isliterally ?x TonyStark))
+rule: ((talkslike ?x TonyStark) (techgenius ?x) -> (isliterally ?x TonyStark))
+rule: ((isliterally ?x TonyStark) -> (IronMan ?x))
+rule: ((IronMan ?x) -> (Avenger ?x))
+rule: ((techgenius ?x) -> (smart ?x))
+rule: ((techgenius ?x) -> (employable ?x))

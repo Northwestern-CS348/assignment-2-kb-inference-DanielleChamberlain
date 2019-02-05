@@ -191,12 +191,7 @@ class InferenceEngine(object):
         binds = match(rule.lhs[0], fact.statement)
         if(binds):
             t = instantiate(rule.rhs, binds)
-            rl = False
-            for tr in t.terms:
-                if is_var(tr):
-                    rl = True
-                    break
-            if rl:
+            if len(rule.lhs) > 1:
                 #print('infer new rule')
                 new_rule = Rule([[], t])
                 new_rule.asserted = False
